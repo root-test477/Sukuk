@@ -3,7 +3,13 @@ import { createClient } from 'redis';
 import * as process from 'process';
 
 const DEBUG = process.env.DEBUG_MODE === 'true';
-const client = createClient({ url: process.env.REDIS_URL });
+const client = createClient({
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    socket: {
+        connectTimeout: 10000,
+        keepAlive: 10000
+    }
+});
 
 client.on('error', err => console.log('Redis Client Error', err));
 
