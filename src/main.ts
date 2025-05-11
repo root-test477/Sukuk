@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import http from 'http';
 import { bot } from './bot';
 import { walletMenuCallbacks } from './connect-wallet-menu';
 import { isAdmin } from './utils';
@@ -127,4 +128,26 @@ Homepage: https://dlb-sukuk.22web.org`;
     });
 }
 
+// Create a simple HTTP server to keep the bot alive on Render
+// Create a simple HTTP server
+const server = http.createServer((req, res) => {
+    // Add a basic health check endpoint
+    if (req.url === '/healthz') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+        return;
+    }
+    
+    // Default response
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Telegram Bot is running!');
+});
+
+// Get port from environment variable or use 10000 as default
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, () => {
+    console.log(`HTTP server running on port ${PORT}`);
+});
+
+// Start the bot
 main();
