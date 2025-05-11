@@ -1,0 +1,130 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { bot } from './bot';
+import { walletMenuCallbacks } from './connect-wallet-menu';
+import { isAdmin } from './utils';
+import { 
+    handleConnectCommand, 
+    handleDisconnectCommand, 
+    handleShowMyWalletCommand, 
+    handleSendTXCommand, 
+    handleFundingCommand, 
+    handleUsersCommand, 
+    handleInfoCommand, 
+    handleSupportCommand, 
+    handlePayNowCommand, 
+    handleApproveCommand, 
+    handleRejectCommand, 
+    handleWithdrawCommand, 
+    handleBackToMenuCallback 
+} from './commands-handlers';
+import { initRedisClient, trackUserInteraction } from './ton-connect/storage';
+import TelegramBot from 'node-telegram-bot-api';
+
+async function main(): Promise<void> {
+    await initRedisClient();
+
+    // Add a global message handler to track all user interactions
+    bot.on('message', async (msg) => {
+        try {
+            // Track any user interaction with the bot
+            await trackUserInteraction(msg.chat.id);
+        } catch (error) {
+            console.error('Error tracking user interaction:', error);
+        }
+    });
+
+    const callbacks = {
+        ...walletMenuCallbacks,
+        back_to_menu: handleBackToMenuCallback
+    };
+
+    bot.on('callback_query', async query => {
+        if (!query.data) {
+            return;
+        }
+
+        // Track user interaction from callback queries
+        if (query.from && query.from.id) {
+            try {
+                await trackUserInteraction(query.from.id);
+            } catch (error) {
+                console.error('Error tracking callback query interaction:', error);
+            }
+        }
+
+        let request: { method: string; data: string };
+
+        try {
+            request = JSON.parse(query.data);
+        } catch {
+            return;
+        }
+
+        if (!callbacks[request.method as keyof typeof callbacks]) {
+            return;
+        }
+
+        callbacks[request.method as keyof typeof callbacks](query, request.data);
+    });
+
+    bot.onText(/\/connect/, handleConnectCommand);
+
+    bot.onText(/\/send_tx/, handleSendTXCommand);
+
+    bot.onText(/\/disconnect/, handleDisconnectCommand);
+
+    bot.onText(/\/my_wallet/, handleShowMyWalletCommand);
+
+    // Handle custom funding amount command
+    bot.onText(/\/funding/, handleFundingCommand);
+
+    // Handle admin-only users command
+    bot.onText(/\/users/, handleUsersCommand);
+    
+    // Registration for new commands
+    bot.onText(/\/info/, handleInfoCommand);
+    bot.onText(/\/support/, handleSupportCommand);
+    bot.onText(/\/pay-now/, handlePayNowCommand);
+    bot.onText(/\/approve/, handleApproveCommand);
+    bot.onText(/\/reject/, handleRejectCommand);
+    bot.onText(/\/withdraw/, handleWithdrawCommand);
+
+    bot.onText(/\/start/, (msg: TelegramBot.Message) => {
+        const chatId = msg.chat.id;
+        const userIsAdmin = isAdmin(chatId);
+        
+        const baseMessage = `
+Discover, create and grow Sukuk financial management instruments for the future.
+
+Commands list: 
+/connect - Connect to a wallet
+/my_wallet - Show connected wallet
+/send_tx - Send transaction (100 TON)
+/funding [amount] - For custom amount, e.g. /funding 200
+/pay-now [transaction_id] - Submit a transaction ID / Hash
+/withdraw - Access the withdrawal portal
+/disconnect - Disconnect from the wallet
+/support [message] - Consult live support assistance
+/info - Help & recommendations`;
+
+        const adminCommands = `
+
+Admin Commands:
+/users - View connected users
+/pay-now - View pending transactions
+/approve [transaction_id] - Approve a transaction
+/reject [transaction_id] - Reject a transaction`;
+
+        const footer = `
+
+Homepage: https://dlb-sukuk.22web.org`;
+
+        const message = userIsAdmin ? baseMessage + adminCommands + footer : baseMessage + footer;
+        
+        bot.sendMessage(chatId, message);
+    });
+}
+
+main();
