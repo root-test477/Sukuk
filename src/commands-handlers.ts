@@ -812,8 +812,8 @@ export async function handleUsersCommand(msg: TelegramBot.Message): Promise<void
                 }
             }
             
-            // Format user information
-            messageText += `👤 *User ID:* ${user.chatId}\n`;
+            // Format user information with display name if available
+            messageText += `👤 *User:* ${user.displayName ? `${user.displayName} (ID: ${user.chatId})` : `ID: ${user.chatId}`}\n`;
             
             // Show wallet status
             if (!user.walletEverConnected) {
