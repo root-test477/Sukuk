@@ -333,54 +333,36 @@ export async function handleFundingCommand(msg: TelegramBot.Message): Promise<vo
 export async function handleInfoCommand(msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
     
-    const infoMessage = `<b>🔵 Sukuk Telegram Bot Information Guide 🔵</b>
+    const infoMessage = `<b>📱 Sukuk Financial Bot - Help & Recommendations 📱</b>
 
-`
-    + `<b>About Wallet Connection:</b>
-`
-    + `Connect your wallet to access all features. Multiple wallets are supported, including:
-- Tonkeeper
-- Tonhub
-- MyTonWallet
-- Telegram Wallet (@wallet)
-`
-    + `🔹 <b>Recommendation:</b> Use @wallet as it is native to Telegram for seamless integration.
+How to Connect a Wallet:
+Use the /connect command and select a supported wallet.
+🔹 Recommendation: Use @wallet as it is native to Telegram for seamless integration.
 
-`
-    + `<b>How to Get Support:</b>
-`
-    + `Use the /support command followed by your message to connect with a live support agent for real-time assistance.
+How to Get Support:
+Use the /support command followed by your message to connect with a live support agent for real-time assistance.
 
-`
-    + `<b>How to Submit a Transaction for Approval:</b>
-`
-    + `After adding TON to your balance, use the /pay_now command followed by your transaction ID for admin confirmation and approval.
+How to Submit a Transaction for Approval:
+After adding TON to your balance, use the /pay_now command followed by the transaction ID to submit it for admin confirmation and approval.
 
-`
-    + `<b>How to Withdraw:</b>
-`
-    + `To withdraw interests, securely use the website by using the /withdraw command or follow the launch button on your screen.
+How to Withdraw:
+To withdraw interests, securely use the website by using the /withdraw command or follow the Launch button on your screen.
 
-`
-    + `<b>Additional Commands:</b>
-`
-    + `/connect - Connect to a wallet
-`
-    + `/my_wallet - View your connected wallet details
-`
-    + `/funding - Fund with a specific amount
-`
-    + `/send_tx - Send a transaction with default amount
-`
-    + `/pay_now - Submit a transaction ID
-`
-    + `/withdraw - Access the withdrawal portal
-`
-    + `/support - Contact live support
-`
-    + `/disconnect - Disconnect your wallet`;
+Additional Commands:
+/connect - Connect to a wallet
+/my_wallet - View your connected wallet details
+/funding - Fund with a specific amount
+/send_tx - Send a transaction with default amount
+/pay_now - Submit a transaction ID
+/withdraw - Access the withdrawal portal
+/support - Contact live support
+/disconnect - Disconnect your wallet`;
     
     await bot.sendMessage(chatId, infoMessage, { parse_mode: 'HTML' });
+}
+
+/**
+ * Handler for the /support command
 }
 
 /**
