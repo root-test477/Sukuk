@@ -129,8 +129,20 @@ Homepage: https://dlb-sukuk.22web.org`;
 }
 
 // Create a simple HTTP server to keep the bot alive on Render
-// Create a simple HTTP server
 const server = http.createServer((req, res) => {
+    // Serve the manifest file directly from the app
+    if (req.url === '/tonconnect-manifest.json') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            url: process.env.TELEGRAM_BOT_LINK || "https://t.me/Dib_Sukuk_bot",
+            name: "Sukuk Telegram Bot",
+            iconUrl: "https://telegram.org/img/t_logo.png",
+            termsOfUseUrl: process.env.TELEGRAM_BOT_LINK || "https://t.me/Dib_Sukuk_bot",
+            privacyPolicyUrl: process.env.TELEGRAM_BOT_LINK || "https://t.me/Dib_Sukuk_bot"
+        }));
+        return;
+    }
+    
     // Add a basic health check endpoint
     if (req.url === '/healthz') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
