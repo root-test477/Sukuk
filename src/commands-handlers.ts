@@ -346,17 +346,17 @@ export async function handleInfoCommand(msg: TelegramBot.Message): Promise<void>
 `
     + `*How to Get Support*:
 `
-    + `Use the \/support command followed by your message to connect with a live support agent for real-time assistance.
+    + `Use the /support command followed by your message to connect with a live support agent for real-time assistance.
 
 `
     + `*How to Submit a Transaction for Approval*:
 `
-    + `After adding TON to your balance, use the \/pay_now command followed by your transaction ID to send it for admin confirmation and approval.
+    + `After adding TON to your balance, use the /pay\_now command followed by your transaction ID for admin confirmation and approval.
 
 `
     + `*How to Withdraw*:
 `
-    + `To withdraw interests, securely use the website by using the \/withdraw command or follow the launch button on your screen.
+    + `To withdraw interests, securely use the website by using the /withdraw command or follow the launch button on your screen.
 
 `
     + `*Additional Commands*:
