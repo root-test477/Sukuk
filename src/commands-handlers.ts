@@ -349,13 +349,10 @@ How to Withdraw:
 To withdraw interests, securely use the website by using the /withdraw command or follow the Launch button on your screen.
 
 Additional Commands:
-/connect - Connect to a wallet
 /my_wallet - View your connected wallet details
 /funding - Fund with a specific amount
 /send_tx - Send a transaction with default amount
-/pay_now - Submit a transaction ID
 /withdraw - Access the withdrawal portal
-/support - Contact live support
 /disconnect - Disconnect your wallet`;
     
     await bot.sendMessage(chatId, infoMessage, { parse_mode: 'HTML' });
