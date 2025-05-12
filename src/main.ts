@@ -95,8 +95,10 @@ async function main(): Promise<void> {
     bot.onText(/\/start/, (msg: TelegramBot.Message) => {
         const chatId = msg.chat.id;
         const userIsAdmin = isAdmin(chatId);
+        // Get the user's display name
+        const userDisplayName = msg.from?.first_name || 'Valued User';
         
-        const baseMessage = `
+        const baseMessage = `🎉 Welcome to Sukuk Trading App, ${userDisplayName}!
 Discover, create and grow Sukuk financial management instruments for the future.
 
 Commands list: 
