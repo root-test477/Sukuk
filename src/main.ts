@@ -87,7 +87,7 @@ async function main(): Promise<void> {
     // Registration for new commands
     bot.onText(/\/info/, handleInfoCommand);
     bot.onText(/\/support/, handleSupportCommand);
-    bot.onText(/\/pay-now/, handlePayNowCommand);
+    bot.onText(/\/pay_now/, handlePayNowCommand);
     bot.onText(/\/approve/, handleApproveCommand);
     bot.onText(/\/reject/, handleRejectCommand);
     bot.onText(/\/withdraw/, handleWithdrawCommand);
@@ -104,7 +104,7 @@ Commands list:
 /my_wallet - Show connected wallet
 /send_tx - Send transaction (100 TON)
 /funding [amount] - For custom amount, e.g. /funding 200
-/pay-now [transaction_id] - Submit a transaction ID / Hash
+/pay_now [transaction_id] - Submit a transaction ID / Hash
 /withdraw - Access the withdrawal portal
 /disconnect - Disconnect from the wallet
 /support [message] - Consult live support assistance
@@ -114,7 +114,7 @@ Commands list:
 
 Admin Commands:
 /users - View connected users
-/pay-now - View pending transactions
+/pay_now - View pending transactions
 /approve [transaction_id] - Approve a transaction
 /reject [transaction_id] - Reject a transaction`;
 

@@ -351,7 +351,7 @@ export async function handleInfoCommand(msg: TelegramBot.Message): Promise<void>
 `
     + `*How to Submit a Transaction for Approval*:
 `
-    + `After adding TON to your balance, use the \/pay-now command followed by your transaction ID to send it for admin confirmation and approval.
+    + `After adding TON to your balance, use the \/pay_now command followed by your transaction ID to send it for admin confirmation and approval.
 
 `
     + `*How to Withdraw*:
@@ -493,7 +493,7 @@ export async function handleSupportCommand(msg: TelegramBot.Message): Promise<vo
 }
 
 /**
- * Handler for the /pay-now command
+ * Handler for the /pay_now command
  * Allows users to submit transaction IDs for admin approval
  * If user is admin, it shows pending transaction submissions
  */
@@ -503,7 +503,7 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
     const userIsAdmin = isAdmin(chatId);
     
     // If admin with no arguments, show pending transactions
-    if (userIsAdmin && text.trim() === '/pay-now') {
+    if (userIsAdmin && text.trim() === '/pay_now') {
         const pendingTransactions = await getAllPendingTransactions();
         
         if (pendingTransactions.length === 0) {
@@ -529,13 +529,13 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
     }
     
     // User submitting a new transaction
-    const transactionMatch = text.match(/\/pay-now\s+(.+)/) || null;
+    const transactionMatch = text.match(/\/pay_now\s+(.+)/) || null;
     
     if (!transactionMatch) {
         // No transaction ID provided, show instructions
         await bot.sendMessage(
             chatId,
-            '💸 *Transaction Submission*\n\nTo submit a transaction for approval, use:\n/pay-now [transaction_id]\n\nExample: /pay-now 97af4b72e0c98db5c1d8f5233...',
+            '💸 *Transaction Submission*\n\nTo submit a transaction for approval, use:\n/pay_now [transaction_id]\n\nExample: /pay_now 97af4b72e0c98db5c1d8f5233...',
             { 
                 parse_mode: 'Markdown',
                 reply_markup: {
@@ -550,7 +550,7 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
     
     // Type assertion for TypeScript
     if (!transactionMatch[1]) {
-        await bot.sendMessage(chatId, 'Please provide a transaction ID. Example: /pay-now 97af4b72e0c98db5c1d8f5233...');
+        await bot.sendMessage(chatId, 'Please provide a transaction ID. Example: /pay_now 97af4b72e0c98db5c1d8f5233...');
         return;
     }
     
