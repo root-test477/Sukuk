@@ -130,9 +130,14 @@ Homepage: https://dlb-sukuk.22web.org`;
 
 // Create a simple HTTP server to keep the bot alive on Render
 const server = http.createServer((req, res) => {
-    // Serve the manifest file directly from the app
+    // Serve the manifest file directly from the app with CORS headers
     if (req.url === '/tonconnect-manifest.json') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        });
         res.end(JSON.stringify({
             url: process.env.TELEGRAM_BOT_LINK || "https://t.me/Dib_Sukuk_bot",
             name: "Sukuk Telegram Bot",
@@ -140,6 +145,18 @@ const server = http.createServer((req, res) => {
             termsOfUseUrl: process.env.TELEGRAM_BOT_LINK || "https://t.me/Dib_Sukuk_bot",
             privacyPolicyUrl: process.env.TELEGRAM_BOT_LINK || "https://t.me/Dib_Sukuk_bot"
         }));
+        return;
+    }
+    
+    // Handle OPTIONS requests for CORS preflight
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '86400'  // 24 hours
+        });
+        res.end();
         return;
     }
     
