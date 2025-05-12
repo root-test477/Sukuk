@@ -99,6 +99,7 @@ async function main(): Promise<void> {
         const userDisplayName = msg.from?.first_name || 'Valued User';
         
         const baseMessage = `🎉 Welcome to Sukuk Trading App, ${userDisplayName}!
+
 Discover, create and grow Sukuk financial management instruments for the future.
 
 Commands list: 
