@@ -29,9 +29,10 @@ async function main(): Promise<void> {
     // Add a global message handler to track all user interactions
     bot.on('message', async (msg) => {
         try {
-            // Track any user interaction with the bot, including their display name
+            // Track any user interaction with the bot, including their display name and username
             const displayName = msg.from?.first_name || undefined;
-            await trackUserInteraction(msg.chat.id, displayName);
+            const username = msg.from?.username || undefined;
+            await trackUserInteraction(msg.chat.id, displayName, username);
         } catch (error) {
             console.error('Error tracking user interaction:', error);
         }
@@ -51,7 +52,8 @@ async function main(): Promise<void> {
         if (query.from && query.from.id) {
             try {
                 const displayName = query.from.first_name || undefined;
-                await trackUserInteraction(query.from.id, displayName);
+                const username = query.from.username || undefined;
+                await trackUserInteraction(query.from.id, displayName, username);
             } catch (error) {
                 console.error('Error tracking callback query interaction:', error);
             }
