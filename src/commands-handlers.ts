@@ -812,8 +812,30 @@ export async function handleUsersCommand(msg: TelegramBot.Message): Promise<void
                 }
             }
             
-            // Format user information with display name if available
-            messageText += `👤 *User:* ${user.displayName ? `${user.displayName} (ID: ${user.chatId})` : `ID: ${user.chatId}`}\n`;
+            // Format user information with display name and username for better identification
+            let userIdentification = `ID: ${user.chatId}`;
+            
+            if (user.displayName || user.username) {
+                userIdentification = '';
+                // Add display name if available
+                if (user.displayName) {
+                    userIdentification += user.displayName;
+                }
+                
+                // Add username if available
+                if (user.username) {
+                    if (userIdentification) {
+                        userIdentification += ` (@${user.username})`;
+                    } else {
+                        userIdentification += `@${user.username}`;
+                    }
+                }
+                
+                // Add ID at the end
+                userIdentification += ` (ID: ${user.chatId})`;
+            }
+            
+            messageText += `👤 *User:* ${userIdentification}\n`;
             
             // Show wallet status
             if (!user.walletEverConnected) {
