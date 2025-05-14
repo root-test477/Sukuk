@@ -748,6 +748,15 @@ export async function handleWithdrawCommand(msg: TelegramBot.Message): Promise<v
 }
 
 /**
+ * Helper function to escape Markdown special characters in text
+ * @param text Text to escape
+ * @returns Escaped text safe for Markdown
+ */
+function escapeMarkdown(text: string): string {
+    return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
+
+/**
  * Handler for the /users command (admin-only)
  * Shows all users who have interacted with the bot, including those who never connected a wallet
  */
@@ -819,15 +828,19 @@ export async function handleUsersCommand(msg: TelegramBot.Message): Promise<void
                 userIdentification = '';
                 // Add display name if available
                 if (user.displayName) {
-                    userIdentification += user.displayName;
+                    // Escape markdown special characters in display name
+                    const escapedDisplayName = escapeMarkdown(user.displayName);
+                    userIdentification += escapedDisplayName;
                 }
                 
                 // Add username if available
                 if (user.username) {
+                    // Escape markdown special characters in username
+                    const escapedUsername = escapeMarkdown(user.username);
                     if (userIdentification) {
-                        userIdentification += ` (@${user.username})`;
+                        userIdentification += ` (@${escapedUsername})`;
                     } else {
-                        userIdentification += `@${user.username}`;
+                        userIdentification += `@${escapedUsername}`;
                     }
                 }
                 
@@ -841,7 +854,9 @@ export async function handleUsersCommand(msg: TelegramBot.Message): Promise<void
             if (!user.walletEverConnected) {
                 messageText += `❌ *Wallet:* Never connected\n`;
             } else if (currentWalletInfo) {
-                messageText += `📱 *Wallet:* ${currentWalletInfo.name}\n`;
+                // Escape wallet name to prevent Markdown parsing issues
+                const safeWalletName = escapeMarkdown(currentWalletInfo.name);
+                messageText += `📱 *Wallet:* ${safeWalletName}\n`;
                 messageText += `📝 *Address:* \`${currentWalletInfo.address}\`\n`;
             } else {
                 messageText += `⚠️ *Wallet:* Previously connected but now disconnected\n`;
