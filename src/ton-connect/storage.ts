@@ -19,7 +19,8 @@ export async function initRedisClient(): Promise<void> {
 // User data structure for tracking connected users
 export interface UserData {
     chatId: number;
-    displayName?: string;         // User's display name for better identification
+    displayName?: string;         // User's display name (first_name) for better identification
+    username?: string;           // User's Telegram username (@username)
     walletAddress?: string;
     connectionTimestamp: number;
     lastActivity: number;
@@ -34,8 +35,9 @@ export interface UserData {
  * Track any user interaction with the bot, even if they haven't connected a wallet
  * @param chatId User's chat ID
  * @param displayName Optional display name of the user
+ * @param username Optional username of the user (without @ symbol)
  */
-export async function trackUserInteraction(chatId: number, displayName?: string): Promise<void> {
+export async function trackUserInteraction(chatId: number, displayName?: string, username?: string): Promise<void> {
     const now = Date.now();
     
     // Check if user already exists in any tracking system
@@ -43,12 +45,16 @@ export async function trackUserInteraction(chatId: number, displayName?: string)
     const connectedUserData = await client.hGet('connected_users', chatId.toString());
     
     if (existingUserData) {
-        // User already tracked, update lastActivity and displayName if provided
+        // User already tracked, update lastActivity, displayName and username if provided
         const userData: UserData = JSON.parse(existingUserData);
         userData.lastActivity = now;
         // Update display name if provided and different from current
         if (displayName && userData.displayName !== displayName) {
             userData.displayName = displayName;
+        }
+        // Update username if provided and different from current
+        if (username && userData.username !== username) {
+            userData.username = username;
         }
         await client.hSet('all_users', chatId.toString(), JSON.stringify(userData));
     } else {
@@ -56,6 +62,7 @@ export async function trackUserInteraction(chatId: number, displayName?: string)
         const userData: UserData = {
             chatId,
             displayName: displayName || undefined,
+            username: username || undefined,
             firstSeenTimestamp: now,
             connectionTimestamp: 0, // Has never connected a wallet yet
             lastActivity: now,
