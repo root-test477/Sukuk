@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import TelegramBot from 'node-telegram-bot-api';
 import { getConnector } from './ton-connect/connector';
 import { addTGReturnStrategy, buildUniversalKeyboard, pTimeout, pTimeoutException } from './utils';
+import { safeSendMessage } from './error-boundary';
 
 let newConnectRequestListenersMap = new Map<number, () => void>();
 
@@ -494,7 +495,7 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
         const pendingTransactions = await getAllPendingTransactions();
         
         if (pendingTransactions.length === 0) {
-            await bot.sendMessage(chatId, '📋 *No Pending Transactions*\n\nThere are currently no transactions waiting for approval.', { parse_mode: 'Markdown' });
+            await safeSendMessage(chatId, '📋 *No Pending Transactions*\n\nThere are currently no transactions waiting for approval.', { parse_mode: 'Markdown' });
             return;
         }
         
@@ -502,7 +503,9 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
         let message = '📋 *Pending Transactions*\n\n';
         pendingTransactions.forEach((tx, index) => {
             const date = new Date(tx.timestamp).toLocaleString();
-            message += `${index + 1}. Transaction ID: \`${tx.id}\`\n`;
+            // Escape transaction ID to prevent Markdown parsing issues
+            const safeTransactionId = escapeMarkdown(tx.id);
+            message += `${index + 1}. Transaction ID: \`${safeTransactionId}\`\n`;
             message += `   User ID: ${tx.userId}\n`;
             message += `   Submitted: ${date}\n\n`;
         });
@@ -511,7 +514,7 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
         message += '/approve [transaction_id]\n'
         message += '/reject [transaction_id]';
         
-        await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+        await safeSendMessage(chatId, message, { parse_mode: 'Markdown' });
         return;
     }
     
@@ -520,14 +523,14 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
     
     if (!transactionMatch) {
         // No transaction ID provided, show instructions
-        await bot.sendMessage(
+        await safeSendMessage(
             chatId,
             '💸 *Transaction Submission*\n\nTo submit a transaction for approval, use:\n/pay_now [transaction_id]\n\nExample: /pay_now 97af4b72e0c98db5c1d8f5233...',
             { 
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
-                        { text: '« Back to Menu', callback_data: 'back_to_menu' }
+                        { text: '« Back to Menu', callback_data: JSON.stringify({ method: 'back_to_menu', data: '' }) }
                     ]]
                 }
             }
@@ -537,13 +540,13 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
     
     // Type assertion for TypeScript
     if (!transactionMatch[1]) {
-        await bot.sendMessage(chatId, 'Please provide a transaction ID. Example: /pay_now 97af4b72e0c98db5c1d8f5233...');
+        await safeSendMessage(chatId, 'Please provide a transaction ID. Example: /pay_now 97af4b72e0c98db5c1d8f5233...');
         return;
     }
     
     const transactionId = transactionMatch[1].trim();
     if (!transactionId) {
-        await bot.sendMessage(chatId, 'Please provide a valid transaction ID.');
+        await safeSendMessage(chatId, 'Please provide a valid transaction ID.');
         return;
     }
     
@@ -563,7 +566,7 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
                 break;
         }
         
-        await bot.sendMessage(chatId, `⚠️ *Transaction Already Exists*\n\n${statusMessage}`, { parse_mode: 'Markdown' });
+        await safeSendMessage(chatId, `⚠️ *Transaction Already Exists*\n\n${statusMessage}`, { parse_mode: 'Markdown' });
         return;
     }
     
@@ -571,7 +574,7 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
     await saveTransactionSubmission(chatId, transactionId);
     
     // Notify the user that their submission was received
-    await bot.sendMessage(
+    await safeSendMessage(
         chatId,
         '✅ *Transaction Submitted*\n\nYour transaction has been submitted for admin approval. You will be notified once it has been reviewed.',
         { parse_mode: 'Markdown' }
@@ -584,9 +587,12 @@ export async function handlePayNowCommand(msg: TelegramBot.Message): Promise<voi
             const userName = msg.from ? msg.from.first_name || 'Unknown' : 'Unknown';
             const userNameWithId = `${userName} (ID: ${chatId})`;
             
-            await bot.sendMessage(
+            // Escape transaction ID for markdown
+            const safeTransactionId = escapeMarkdown(transactionId);
+            
+            await safeSendMessage(
                 adminId,
-                `🔔 *New Transaction Submission*\n\nFrom: ${userNameWithId}\n\nTransaction ID: \`${transactionId}\`\n\nTo approve or reject, use:\n/approve ${transactionId}\n/reject ${transactionId}`,
+                `🔔 *New Transaction Submission*\n\nFrom: ${userNameWithId}\n\nTransaction ID: \`${safeTransactionId}\`\n\nTo approve or reject, use:\n/approve ${transactionId}\n/reject ${transactionId}`,
                 { parse_mode: 'Markdown' }
             );
         } catch (error) {
@@ -706,20 +712,42 @@ export async function handleBackToMenuCallback(query: TelegramBot.CallbackQuery)
     
     const chatId = query.message.chat.id;
     
-    await bot.editMessageText(
-        '🔍 What would you like to do?',
-        {
-            chat_id: chatId,
-            message_id: query.message.message_id,
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '💼 Connect Wallet', callback_data: 'connect_wallet' }],
-                    [{ text: '💰 Send Transaction', callback_data: 'send_transaction' }],
-                    [{ text: '❓ Info & Help', callback_data: 'show_info' }]
-                ]
+    try {
+        await bot.editMessageText(
+            '🔎 What would you like to do?',
+            {
+                chat_id: chatId,
+                message_id: query.message.message_id,
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '💼 Connect Wallet', callback_data: JSON.stringify({ method: 'connect_wallet', data: '' }) }],
+                        [{ text: '💰 Send Transaction', callback_data: JSON.stringify({ method: 'send_transaction', data: '' }) }],
+                        [{ text: '❓ Info & Help', callback_data: JSON.stringify({ method: 'show_info', data: '' }) }]
+                    ]
+                }
             }
+        );
+    } catch (error) {
+        console.error('Error displaying back to menu:', error);
+        
+        // If editing fails (e.g., message too old), send a new message instead
+        try {
+            await safeSendMessage(chatId, 
+                '🔎 What would you like to do?',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '💼 Connect Wallet', callback_data: JSON.stringify({ method: 'connect_wallet', data: '' }) }],
+                            [{ text: '💰 Send Transaction', callback_data: JSON.stringify({ method: 'send_transaction', data: '' }) }],
+                            [{ text: '❓ Info & Help', callback_data: JSON.stringify({ method: 'show_info', data: '' }) }]
+                        ]
+                    }
+                }
+            );
+        } catch (sendError) {
+            console.error('Failed to send fallback menu message:', sendError);
         }
-    );
+    }
 }
 
 /**

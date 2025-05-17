@@ -22,9 +22,20 @@ import {
 } from './commands-handlers';
 import { initRedisClient, trackUserInteraction } from './ton-connect/storage';
 import TelegramBot from 'node-telegram-bot-api';
+import { withErrorBoundary } from './error-boundary';
+import { handleScheduleCommand } from './scheduler';
 
 async function main(): Promise<void> {
     await initRedisClient();
+
+    // Add global error handler for the bot
+    process.on('uncaughtException', (error) => {
+        console.error('UNCAUGHT EXCEPTION! Bot will continue running:', error);
+    });
+
+    process.on('unhandledRejection', (reason) => {
+        console.error('UNHANDLED REJECTION! Bot will continue running:', reason);
+    });
 
     // Add a global message handler to track all user interactions
     bot.on('message', async (msg) => {
@@ -71,30 +82,46 @@ async function main(): Promise<void> {
             return;
         }
 
+        try {
         callbacks[request.method as keyof typeof callbacks](query, request.data);
+    } catch (error) {
+        console.error('Error handling callback query:', error);
+        // Try to send a message to the user that something went wrong
+        if (query.message) {
+            try {
+                await bot.sendMessage(query.message.chat.id, "Sorry, there was an error processing your request.");
+            } catch (sendError) {
+                console.error('Failed to send error message:', sendError);
+            }
+        }
+    }
     });
 
-    bot.onText(/\/connect/, handleConnectCommand);
+    // Wrap all command handlers with error boundary
+    bot.onText(/\/connect/, withErrorBoundary(handleConnectCommand));
 
-    bot.onText(/\/send_tx/, handleSendTXCommand);
+    bot.onText(/\/send_tx/, withErrorBoundary(handleSendTXCommand));
 
-    bot.onText(/\/disconnect/, handleDisconnectCommand);
+    bot.onText(/\/disconnect/, withErrorBoundary(handleDisconnectCommand));
 
-    bot.onText(/\/my_wallet/, handleShowMyWalletCommand);
+    bot.onText(/\/my_wallet/, withErrorBoundary(handleShowMyWalletCommand));
 
     // Handle custom funding amount command
-    bot.onText(/\/funding/, handleFundingCommand);
+    bot.onText(/\/funding/, withErrorBoundary(handleFundingCommand));
 
     // Handle admin-only users command
-    bot.onText(/\/users/, handleUsersCommand);
+    bot.onText(/\/users/, withErrorBoundary(handleUsersCommand));
     
     // Registration for new commands
-    bot.onText(/\/info/, handleInfoCommand);
-    bot.onText(/\/support/, handleSupportCommand);
-    bot.onText(/\/pay_now/, handlePayNowCommand);
-    bot.onText(/\/approve/, handleApproveCommand);
-    bot.onText(/\/reject/, handleRejectCommand);
-    bot.onText(/\/withdraw/, handleWithdrawCommand);
+    bot.onText(/\/info/, withErrorBoundary(handleInfoCommand));
+    bot.onText(/\/support/, withErrorBoundary(handleSupportCommand));
+    bot.onText(/\/pay_now/, withErrorBoundary(handlePayNowCommand));
+    bot.onText(/\/approve/, withErrorBoundary(handleApproveCommand));
+    bot.onText(/\/reject/, withErrorBoundary(handleRejectCommand));
+    bot.onText(/\/withdraw/, withErrorBoundary(handleWithdrawCommand));
+    
+    // New scheduled messages command (admin-only)
+    bot.onText(/\/schedule/, withErrorBoundary(handleScheduleCommand));
 
     bot.onText(/\/start/, (msg: TelegramBot.Message) => {
         const chatId = msg.chat.id;
