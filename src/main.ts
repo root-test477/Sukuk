@@ -150,7 +150,8 @@ Admin Commands:
 /users - View connected users
 /pay_now - View pending transactions
 /approve [transaction_id] - Approve a transaction
-/reject [transaction_id] - Reject a transaction`;
+/reject [transaction_id] - Reject a transaction
+/schedule [time] [message] - Send scheduled messages (e.g., /schedule 10m Hello)`;
 
         const footer = `
 
